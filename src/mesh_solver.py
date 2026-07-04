@@ -16,12 +16,6 @@ import math
 # Docker image
 OPENFOAM_IMAGE = "microfluidica/openfoam:13"
 
-
-#| code-line-numbers: true
-#| eval: false
-
-# function to generate airfoil, plot it
-
 def generate_naca4(digits, chord=1.0, points=100):
     """Generates 2D coordinates for a 4-digit NACA airfoil."""
     m = int(digits[0]) / 100.0  # Max camber

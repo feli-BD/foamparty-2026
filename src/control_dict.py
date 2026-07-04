@@ -33,13 +33,16 @@ FoamFile
 application     foamRun;
 solver          incompressibleFluid;
 
-startFrom       startTime;
-startTime       0;
+startFrom       latestTime;
 
 stopAt          endTime;
 endTime         {end_time};
 
 deltaT          0.0005; // Set conservative for initialization stability
+
+adjustTimeStep  yes;
+maxCo           0.5;
+maxDeltaT       0.01;
 
 writeControl    runTime;
 writeInterval   {write_interval};

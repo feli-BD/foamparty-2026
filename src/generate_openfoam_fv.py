@@ -1,3 +1,5 @@
+import os
+
 def generate_openfoam_fvschemes_fvsolution(case_dir, steady_state=True):
     """
     Generates fvSchemes and fvSolution files tailored for OpenFOAM 13's
@@ -156,5 +158,3 @@ PIMPLE
 
     with open(os.path.join(system_dir, "fvSolution"), "w") as f:
         f.write(fv_solution)
-
-generate_openfoam_fvschemes_fvsolution("openfoam_naca")

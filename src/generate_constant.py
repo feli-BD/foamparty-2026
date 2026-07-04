@@ -39,9 +39,6 @@ RAS
         
     return dict_path
 
-create_momentum_transport_sa("openfoam_naca")
-
-
 def generate_physical_properties(case_dir, nu_value=1.5e-5):
     """
     Generates a physicalProperties file for incompressible flow.
@@ -74,8 +71,6 @@ nu              [0 2 -1 0 0 0 0] {nu_value};
     file_path = os.path.join(constant_dir, "physicalProperties")
     with open(file_path, "w") as f:
         f.write(file_content)
-
-generate_physical_properties("openfoam_naca", nu_value=1.5e-5)
 
 def generate_0_directory(case_dir, u_freestream, rho_freestream, nu=1.5e-5):
     """
