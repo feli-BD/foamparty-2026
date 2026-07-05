@@ -72,7 +72,7 @@ def main():
         ]
     
    
-    point_options = [20, 40, 80, 160]
+    point_options = [1280]
     results = []
 
     airfoil_code = args.airfoil
@@ -128,7 +128,7 @@ def main():
             cd = tail[2].mean()
             cl = tail[3].mean()
             results.append({'points': pts, 'Cd': cd, 'Cl': cl, 'Time': time})
-            results_path = "convergence_results.json"
+            results_path = "results/convergence_results.json"
             with open(results_path, "w") as f:
                 json.dump({"airfoil": airfoil_code, "results": results}, f, indent=2)
             print(f"\n[+] Raw results saved to {results_path}")
@@ -157,7 +157,7 @@ def main():
             ax.legend()
 
             fig.tight_layout()
-            plot_path = "convergence_error_plot.png"
+            plot_path = "plots/convergence_error_plot.png"
             plt.savefig(plot_path)
             print(f"[+] Convergence error plot saved to {plot_path}")
             plt.show()
@@ -261,7 +261,7 @@ def main():
                         break
  
         # --- Persist the raw time-series so this can be replotted without rerunning ---
-        time_results_path = "time_convergence_results.json"
+        time_results_path = "results/time_convergence_results.json"
         time_payload = {
             "airfoil": airfoil_code,
             "points": time_study_points,
@@ -313,7 +313,7 @@ def main():
         ax2.grid(True, which="both", alpha=0.4)
  
         fig.tight_layout()
-        time_plot_path = "time_convergence_study.png"
+        time_plot_path = "plots/time_convergence_study.png"
         fig.savefig(time_plot_path)
         print(f"[+] Time convergence plot saved to {time_plot_path}")
         plt.show()

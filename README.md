@@ -1,93 +1,117 @@
-# FoamParty-2026
+# NACA Airfoil Camber Study — OpenFOAM Automation Pipeline
 
+Automated OpenFOAM pipeline for studying the effect of camber on lift and drag
+coefficients for a NACA 4-digit airfoil family, including mesh convergence,
+time convergence, and a camber parameter sweep. All meshing, case setup,
+solving, and post-processing is driven from Python and run inside a Docker
+container for reproducibility.
 
+![Particle in a Stadium Evolution](results/Paraview/airfoil.gif)
 
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Repository Layout
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.git.nrw/felicia.erb/foamparty-2026.git
-git branch -M main
-git push -uf origin main
+.
+├── README.md
+├── convergence_study.py          # Phase 1: mesh convergence + Phase 2: time convergence
+├── parameter_study.py             # Camber (M = 0-8) parameter sweep
+├── src/
+│   ├── generate_constant.py       # momentumTransport, physicalProperties, 0/ field writers
+│   ├── mesh_solver.py             # generate_naca4, curiosityFluidsAirfoilMesher (blockMeshDict writer)
+│   └── control_dict.py            # create_control_dict, fvSchemes/fvSolution writer
+├── results/
+│   ├── convergence_results.json           # Mesh convergence: Cl/Cd vs. points
+│   ├── time_convergence_results.json      # Time convergence: Cl/Cd/residuals vs. time
+│   ├── parameter_study_results.json       # Camber sweep: Cl/Cd vs. M
+│   ├── Postprocessing_plotting.ipynb      # Recreate all plots from json files
+│   ├── Paraview/
+│       ├── mesh_paraview.pvsm             # statefile to recreate paraview outputs
+│       └── airfoil.gif                    # airfoil video used in readme
+│   └── plots/
+│       ├── convergence_error_plot.png
+│       ├── time_convergence_study.png
+│       ├── camber_vs_Cl.png
+│       └── camber_vs_Cd.png
+└── report/
+    └── minipaper.pdf             
 ```
 
-## Integrate with your tools
+## Requirements
 
-* [Set up project integrations](https://gitlab.git.nrw/felicia.erb/foamparty-2026/-/settings/integrations)
+- Python 3.10+
+- Docker Desktop, running, with the `microfluidica/openfoam:13` image
+  available (pulled automatically on first run)
+- Python packages: `numpy`, `pandas`, `matplotlib`
 
-## Collaborate with your team
+```bash
+pip install numpy pandas matplotlib
+```
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+## Reproducing the Study
 
-## Test and Deploy
+All commands below are run from the repository root.
 
-Use the built-in continuous integration in GitLab.
+### 1. Mesh convergence study (Part 1) + time convergence study (Part 2)
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+Runs both phases in sequence: a surface-discretization sweep
+(`points = 20, 40, 60, 80, 160, 320, ...`, edit `point_options` in
+`convergence_study.py` to change), followed by a single longer run at the
+finest successful resolution to determine the required simulation duration.
 
-***
+```bash
+python convergence_study.py --steady
+```
 
-# Editing this README
+Key flags:
+- `--airfoil 8412` — NACA 4-digit code used for the convergence study (default: `8412`)
+- `--u_freestream 30.0`, `--rho_freestream 1.225`, `--nu 1.5e-5` — flow conditions
+- `--endtime 0.6` — end time (transient seconds, or steady-state iteration count) used for Part 1's mesh sweep
+- `--time_study_points 320` — override which resolution Part 2 uses (defaults to the finest resolution that succeeded in Part 1)
+- `--time_study_endtime 0.6` — end time for the Part 2 run (kept generous so the full settling behavior is visible)
+- `--steady` — use steady-state (SIMPLE) instead of transient (Euler/PIMPLE); **steady-state was used for all final results in this study** (see Methods section for justification)
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Outputs: `convergence_results.json`, `convergence_error_plot.png`,
+`time_convergence_results.json`, `time_convergence_study.png`.
 
-## Suggestions for a good README
+### 2. Mesh convergence only (skip time convergence)
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Not currently a built-in flag in every version of the script — if your copy
+of `convergence_study.py` doesn't support skipping Part 2, run Part 1 with a
+very short `--time_study_endtime` so Part 2 completes almost instantly and
+can simply be ignored:
 
-## Name
-Choose a self-explaining name for your project.
+```bash
+python convergence_study.py --steady --time_study_endtime 0.01
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Or, if you've added the `--skip_mesh_study` flag (see conversation history /
+script comments), the inverse — time convergence only, skipping the mesh
+sweep entirely — is run as:
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```bash
+python convergence_study.py --steady --skip_mesh_study --time_study_points 320 --time_study_endtime 0.6
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+### 3. Camber parameter study
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Runs the validated mesh resolution and simulation duration across a sweep of
+camber values (NACA `M` digit, 0–8% of chord), holding max-camber position
+(`P=4`) and thickness (`T=12`) fixed, producing the final `NACA X412` family
+used in the report.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```bash
+python parameter_study.py --points 320 --endtime 0.4 --steady
+```
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+Key flags:
+- `--points 320` — surface discretization points (from the mesh convergence result)
+- `--endtime 0.4` — simulation duration / iteration count (from the time convergence result)
+- `--camber_min 0 --camber_max 8 --camber_step 1` — camber sweep range (default: full 0–8 range)
+- `--camber_position 4`, `--thickness 12` — fixed NACA digits (P, T)
+- `--steady` — steady-state solver, matching the convergence studies
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+The script supports resuming an interrupted sweep: if
+`parameter_study_results.json` already contains results for some camber
+values, those are skipped automatically on a rerun rather than recomputed.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Outputs: `parameter_study_results.json`, `camber_vs_Cl.png`, `camber_vs_Cd.png`

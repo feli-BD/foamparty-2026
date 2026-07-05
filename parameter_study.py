@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import pandas as pd
 import json
+import time
 
 from src.generate_constant import (
     create_momentum_transport_sa,
@@ -24,10 +25,10 @@ def main():
                      "using a fixed, previously-validated mesh resolution and end time."
     )
 
-    parser.add_argument("--points", type=int, default=160,
+    parser.add_argument("--points", type=int, default=320,
                         help="Surface discretization points (from the mesh convergence "
                              "study) to use for every camber case (default: 160)")
-    parser.add_argument("--endtime", type=float, default=0.6,
+    parser.add_argument("--endtime", type=float, default=0.4,
                         help="Simulation end time in seconds -- IMPORTANT: set this to "
                              "the value validated by the time-convergence study, not the "
                              "default (default: 0.6)")
@@ -75,6 +76,19 @@ def main():
     camber_values = list(range(args.camber_min, args.camber_max + 1, args.camber_step))
     results = []
 
+    results_path = "parameter_study_results_euler320.json"
+
+    # Resume from a previous run if results already exist
+    results = []
+    already_done = set()
+    if os.path.exists(results_path):
+        with open(results_path) as f:
+            existing = json.load(f)
+        results = existing.get("results", [])
+        already_done = {r['m'] for r in results}
+        if already_done:
+            print(f"[+] Resuming: found existing results for M = {sorted(already_done)}")
+
     print("====================================================")
     print(" Parameter Study: Effect of Camber (M) on Cl and Cd ")
     print(f" Fixed: P={args.camber_position}, T={args.thickness}, "
@@ -83,15 +97,28 @@ def main():
     print("====================================================")
 
     for m in camber_values:
+        if m in already_done:
+            print(f"\n[!] M={m} already computed, skipping")
+            continue
+
         airfoil_code = f"{m}{args.camber_position}{args.thickness:02d}"
         print(f"\n[!] Evaluation Setup for Camber M={m} -- NACA {airfoil_code}")
 
-        case_name = f"openfoam_naca_camber_{airfoil_code}"
+        case_name = f"openfoam_naca_camber_{airfoil_code}_euler"
 
         # Start every case completely fresh -- avoids resuming from a stale
         # time directory left over from a previous run of the same case name
         if os.path.exists(case_name):
-            shutil.rmtree(case_name)
+            for attempt in range(5):
+                try:
+                    shutil.rmtree(case_name)
+                    break
+                except PermissionError:
+                    print(f"[!] {case_name} locked, retrying in 2s (attempt {attempt+1}/5)")
+                    time.sleep(2)
+            else:
+                print(f"[-] Could not remove {case_name} after retries, skipping M={m}")
+                continue
 
         os.makedirs(os.path.join(case_name, "system"), exist_ok=True)
         os.makedirs(os.path.join(case_name, "constant"), exist_ok=True)
@@ -156,7 +183,7 @@ def main():
         results.append({'m': m, 'airfoil': airfoil_code, 'Cd': cd, 'Cl': cl})
         print(f"    -> Cd={cd:.5f}, Cl={cl:.5f}")
 
-        results_path = "parameter_study_results_steady.json"
+        results_path = "results/parameter_study_results.json"
         with open(results_path, "w") as f:
             json.dump({
                 "camber_position": args.camber_position,
@@ -191,7 +218,7 @@ def main():
                   f"{args.thickness:02d}, {args.points} pts, endtime={args.endtime}s")
         fig.tight_layout()
 
-        plot_path = "camber_parameter_study_plot_steady.png"
+        plot_path = "plots/camber_parameter_study_plot_steady.png"
         plt.savefig(plot_path)
         print(f"\n[+] Camber parameter study plot saved to {plot_path}")
         plt.show()
