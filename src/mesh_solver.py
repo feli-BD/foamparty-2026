@@ -63,17 +63,6 @@ def generate_naca4(digits, chord=1.0, points=100):
     # Scale by chord length
     return np.column_stack((x_coords, y_coords)) * chord
 
-# airfoil_code = "8412"
-# chord_length = 1.0  # 1 meter long
-# n_surface_points = 20
-
-# discretized_surface_points = generate_naca4(airfoil_code, chord=chord_length, points=n_surface_points)
-
-# ax = plt.subplots(1, 1, figsize=(10, 5))[1]
-
-# ax.plot(discretized_surface_points[:, 0], discretized_surface_points[:, 1], 'o-', label=f'NACA {airfoil_code}')
-# ax.set_aspect("equal")
-# plt.show()
 
 #| echo: false
 
