@@ -1,10 +1,8 @@
-# NACA Airfoil Camber Study — OpenFOAM Automation Pipeline
+# OpenFOAM NACA Airfoil Camber Study
 
-Automated OpenFOAM pipeline for studying the effect of camber on lift and drag
+OpenFOAM pipeline for studying the effect of camber on lift and drag
 coefficients for a NACA 4-digit airfoil family, including mesh convergence,
-time convergence, and a camber parameter sweep. All meshing, case setup,
-solving, and post-processing is driven from Python and run inside a Docker
-container for reproducibility.
+time convergence, and a camber parameter sweep. 
 
 ![Particle in a Stadium Evolution](results/Paraview/airfoil.gif)
 
