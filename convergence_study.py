@@ -72,7 +72,7 @@ def main():
         ]
     
    
-    point_options = [1280]
+    point_options = [20,40,80, 160,320,640, 1280]
     results = []
 
     airfoil_code = args.airfoil
@@ -157,7 +157,7 @@ def main():
             ax.legend()
 
             fig.tight_layout()
-            plot_path = "plots/convergence_error_plot.png"
+            plot_path = "results/plots/convergence_error_plot.png"
             plt.savefig(plot_path)
             print(f"[+] Convergence error plot saved to {plot_path}")
             plt.show()
@@ -313,7 +313,7 @@ def main():
         ax2.grid(True, which="both", alpha=0.4)
  
         fig.tight_layout()
-        time_plot_path = "plots/time_convergence_study.png"
+        time_plot_path = "results/plots/time_convergence_study.png"
         fig.savefig(time_plot_path)
         print(f"[+] Time convergence plot saved to {time_plot_path}")
         plt.show()

@@ -76,7 +76,7 @@ def main():
     camber_values = list(range(args.camber_min, args.camber_max + 1, args.camber_step))
     results = []
 
-    results_path = "parameter_study_results_euler320.json"
+    results_path = "parameter_study_results.json"
 
     # Resume from a previous run if results already exist
     results = []
@@ -104,7 +104,7 @@ def main():
         airfoil_code = f"{m}{args.camber_position}{args.thickness:02d}"
         print(f"\n[!] Evaluation Setup for Camber M={m} -- NACA {airfoil_code}")
 
-        case_name = f"openfoam_naca_camber_{airfoil_code}_euler"
+        case_name = f"openfoam_naca_camber_{airfoil_code}"
 
         # Start every case completely fresh -- avoids resuming from a stale
         # time directory left over from a previous run of the same case name
@@ -218,7 +218,7 @@ def main():
                   f"{args.thickness:02d}, {args.points} pts, endtime={args.endtime}s")
         fig.tight_layout()
 
-        plot_path = "plots/camber_parameter_study_plot_steady.png"
+        plot_path = "results/plots/camber_parameter_study_plot_steady.png"
         plt.savefig(plot_path)
         print(f"\n[+] Camber parameter study plot saved to {plot_path}")
         plt.show()
