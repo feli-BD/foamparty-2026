@@ -4,7 +4,7 @@ OpenFOAM pipeline for studying the effect of camber on lift and drag
 coefficients for a NACA 4-digit airfoil family, including mesh convergence,
 time convergence, and a camber parameter sweep. 
 
-![Particle in a Stadium Evolution](results/Paraview/airfoil.gif)
+![Flow around Naca Airfoil](results/Paraview/airfoil.gif)
 
 ## Repository Layout
 
@@ -31,7 +31,7 @@ time convergence, and a camber parameter sweep.
 │       ├── camber_vs_Cl.png
 │       └── camber_vs_Cd.png
 └── report/
-    └── minipaper.pdf             
+    └── MSSD_Project2.pdf           
 ```
 
 ## Requirements
@@ -82,8 +82,7 @@ can simply be ignored:
 python convergence_study.py --steady --time_study_endtime 0.01
 ```
 
-Or, if you've added the `--skip_mesh_study` flag (see conversation history /
-script comments), the inverse — time convergence only, skipping the mesh
+Or, if you've added the `--skip_mesh_study` flag, the inverse — time convergence only, skipping the mesh
 sweep entirely — is run as:
 
 ```bash
